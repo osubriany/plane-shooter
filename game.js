@@ -260,6 +260,21 @@ class Player {
         this.movingLeft = false;
         this.movingRight = false;
         this.shootTimer = 0;
+        
+        // Load player image
+        this.image = new Image();
+        this.image.src = 'assets/sprites/player_plane.png';
+        this.image.onload = () => {
+            // Scale image to a reasonable size (50x50 pixels)
+            const scale = 50 / Math.max(this.image.width, this.image.height);
+            this.width = this.image.width * scale;
+            this.height = this.image.height * scale;
+            console.log('Player image loaded successfully');
+            console.log('Image dimensions:', this.width, this.height);
+        };
+        this.image.onerror = () => {
+            console.error('Failed to load player image');
+        };
     }
 
     update() {
@@ -282,8 +297,24 @@ class Player {
     }
 
     draw(ctx) {
-        ctx.fillStyle = '#00FF00';
-        ctx.fillRect(this.x, this.y, this.width, this.height);
+        // Draw player ship
+        if (this.image.complete && this.image.width !== 0) {
+            // Draw scaled image
+            ctx.drawImage(
+                this.image,
+                0, 0, this.image.width, this.image.height, // Source rectangle
+                this.x, this.y, this.width, this.height    // Destination rectangle
+            );
+        } else {
+            // Fallback to green rectangle if image isn't loaded yet
+            ctx.fillStyle = '#00FF00';
+            ctx.fillRect(this.x, this.y, this.width, this.height);
+            
+            // Add debug text
+            ctx.fillStyle = '#FF0000';
+            ctx.font = '12px Arial';
+            ctx.fillText('Loading...', this.x + 5, this.y + 15);
+        }
     }
 }
 
