@@ -21,6 +21,9 @@ class Game {
         // Frame timing
         this.lastFrameTime = 0;
         
+        // Pause state
+        this.isPaused = false;
+        
         // Initialize audio
         this.explosionSound = new Audio('https://freesound.org/data/previews/445/445517_8206808-lq.mp3');
         this.explosionSound.volume = 0.5; // Reduce volume slightly
@@ -35,23 +38,72 @@ class Game {
     }
 
     init() {
-        // Add event listener for first user interaction
-        document.addEventListener('keydown', (e) => {
+        // If already initialized, don't set up event listeners again
+        if (this.initialized) {
+            return;
+        }
+        
+        // Focus the canvas first
+        this.canvas.tabIndex = 0;
+        this.canvas.focus();
+        
+        // Add keyboard event listeners directly to the canvas
+        this.canvas.addEventListener('keydown', (e) => {
+            // Handle pause
+            if (e.key === 'Escape') {
+                this.togglePause();
+                return;
+            }
+            
+            // Prevent default behavior for WASD keys
+            if (['w', 'a', 's', 'd'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+            }
             this.handleKeyDown(e);
+            
             // Start music on first key press if not already playing
             if (!this.gameMusic.playing) {
-                this.gameMusic.play().catch(error => {
+                try {
+                    this.gameMusic.play();
+                } catch (error) {
                     console.log('Error playing music:', error);
-                });
+                }
             }
         });
-        document.addEventListener('keyup', (e) => this.handleKeyUp(e));
-        
-        // Try to start music immediately
-        this.gameMusic.play().catch(error => {
-            console.log('Error playing music:', error);
+        this.canvas.addEventListener('keyup', (e) => {
+            // Prevent default behavior for WASD keys
+            if (['w', 'a', 's', 'd'].includes(e.key.toLowerCase())) {
+                e.preventDefault();
+            }
+            this.handleKeyUp(e);
         });
+
+        // Add click handler to focus canvas when clicked
+        this.canvas.addEventListener('click', () => {
+            this.canvas.focus();
+        });
+
+        // Add pause menu button event listeners
+        const resumeButton = document.getElementById('resumeButton');
+        const restartButton = document.getElementById('restartButton');
+        const exitButton = document.getElementById('exitButton');
+
+        if (resumeButton) {
+            resumeButton.addEventListener('click', () => {
+                this.togglePause();
+            });
+        }
+
+        if (restartButton) {
+            restartButton.addEventListener('click', () => {
+                this.restartGame();
+            });
+        }
+
+        // Mark as initialized
+        this.initialized = true;
         
+        // Don't try to play music immediately - it will start on first key press
         this.gameLoop();
     }
 
@@ -69,17 +121,21 @@ class Game {
             return;
         }
 
-        // Update game state
-        this.update();
+        // Update game state if not paused
+        if (!this.isPaused) {
+            this.update();
+        }
         
         // Draw frame
         this.draw();
         
-        // Update timer
-        this.timeRemaining--;
-        if (this.timeRemaining <= 0) {
-            this.gameOver = true;
-            alert(`Time's up! Final Score: ${this.score}`);
+        // Update timer if not paused
+        if (!this.isPaused) {
+            this.timeRemaining--;
+            if (this.timeRemaining <= 0) {
+                this.gameOver = true;
+                alert(`Time's up! Final Score: ${this.score}`);
+            }
         }
         
         // Update timer display
@@ -147,6 +203,15 @@ class Game {
         // Update score and health
         document.getElementById('score').textContent = this.score;
         document.getElementById('health').textContent = this.player.health;
+        
+        // Draw pause menu if game is paused
+        if (this.isPaused) {
+            this.ctx.fillStyle = '#FFF';
+            this.ctx.font = '36px Arial';
+            this.ctx.textAlign = 'center';
+            this.ctx.textBaseline = 'middle';
+            this.ctx.fillText('Game Paused', this.canvas.width / 2, this.canvas.height / 2);
+        }
     }
 
     checkCollisions() {
@@ -223,12 +288,65 @@ class Game {
     }
 
     handleKeyDown(e) {
+        // Handle pause
+        if (e.key === 'Escape') {
+            this.togglePause();
+            return;
+        }
+        
         // Handle arrow keys and WASD
         if (e.key === 'ArrowUp' || e.key === 'w') this.player.movingUp = true;
         if (e.key === 'ArrowDown' || e.key === 's') this.player.movingDown = true;
         if (e.key === 'ArrowLeft' || e.key === 'a') this.player.movingLeft = true;
         if (e.key === 'ArrowRight' || e.key === 'd') this.player.movingRight = true;
     }
+
+    togglePause() {
+        this.isPaused = !this.isPaused;
+        const pauseMenu = document.getElementById('pauseMenu');
+        pauseMenu.classList.toggle('hidden');
+        
+        // Pause/unpause music
+        if (this.isPaused) {
+            this.gameMusic.pause();
+        } else {
+            this.gameMusic.play();
+            // Focus the canvas when resuming
+            this.canvas.focus();
+        }
+    }
+
+    // Add restart and exit methods
+    restartGame() {
+        // Reset game state
+        this.player = new Player();
+        this.enemies = [];
+        this.bullets = [];
+        this.powerUps = [];
+        this.particles = [];
+        this.score = 0;
+        this.gameOver = false;
+        this.wave = 1;
+        this.enemySpawnTimer = 0;
+        this.powerUpSpawnTimer = 0;
+        this.timeRemaining = 60 * 60;
+        
+        // Hide pause menu
+        this.isPaused = false;
+        document.getElementById('pauseMenu').classList.add('hidden');
+        
+        // Restart music
+        this.gameMusic.currentTime = 0;
+        this.gameMusic.play();
+        
+        // Focus the canvas
+        this.canvas.focus();
+        
+        // Reinitialize the game
+        this.init();
+    }
+
+
 
     handleKeyUp(e) {
         // Handle arrow keys and WASD
