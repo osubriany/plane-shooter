@@ -27,9 +27,6 @@ A classic top-down shooter game built with HTML5 Canvas and JavaScript.
 2. Open `index.html` in a web browser
 3. Start playing!
 
-## Play Online
-You can also play the game online at: https://osubriany.github.io/plane-shooter/
-
 ## Technologies Used
 - HTML5 Canvas
 - JavaScript
