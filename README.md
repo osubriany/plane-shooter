@@ -19,7 +19,7 @@ A classic top-down shooter game built with HTML5 Canvas and JavaScript.
 5. Avoid enemy ships and survive as long as possible
 
 ## Controls
-- Arrow keys: Move ship
+- Arrow keys or WASD: Move ship
 - No shooting controls needed (automatic)
 
 ## Setup

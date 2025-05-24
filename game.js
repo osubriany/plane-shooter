@@ -18,6 +18,9 @@ class Game {
         this.powerUpSpawnTimer = 0;
         this.timeRemaining = 60 * 60; // 60 seconds * 60 frames per second
         
+        // Frame timing
+        this.lastFrameTime = 0;
+        
         // Initialize audio
         this.explosionSound = new Audio('https://freesound.org/data/previews/445/445517_8206808-lq.mp3');
         this.explosionSound.volume = 0.5; // Reduce volume slightly
@@ -25,7 +28,9 @@ class Game {
         // Initialize background music
         this.gameMusic = document.getElementById('gameMusic');
         this.gameMusic.volume = 0.3; // Set volume to 30%
+        this.gameMusic.loop = true;
         
+        // Initialize game
         this.init();
     }
 
@@ -51,24 +56,39 @@ class Game {
     }
 
     gameLoop() {
-        if (!this.gameOver) {
-            this.update();
-            this.draw();
-            
-            // Update timer
-            this.timeRemaining--;
-            if (this.timeRemaining <= 0) {
-                this.gameOver = true;
-                alert(`Time's up! Final Score: ${this.score}`);
-            }
-            
-            // Update timer display
-            const minutes = Math.floor(this.timeRemaining / 3600).toString().padStart(2, '0');
-            const seconds = Math.floor((this.timeRemaining % 3600) / 60).toString().padStart(2, '0');
-            document.getElementById('timer').textContent = `${minutes}:${seconds}`;
-            
-            requestAnimationFrame(() => this.gameLoop());
+        // Calculate time since last frame
+        const now = Date.now();
+        const deltaTime = now - (this.lastFrameTime || now);
+        this.lastFrameTime = now;
+
+        // Limit frame rate to 100 FPS (10ms per frame)
+        if (deltaTime < 10) {
+            setTimeout(() => {
+                requestAnimationFrame(() => this.gameLoop());
+            }, 10 - deltaTime);
+            return;
         }
+
+        // Update game state
+        this.update();
+        
+        // Draw frame
+        this.draw();
+        
+        // Update timer
+        this.timeRemaining--;
+        if (this.timeRemaining <= 0) {
+            this.gameOver = true;
+            alert(`Time's up! Final Score: ${this.score}`);
+        }
+        
+        // Update timer display
+        const minutes = Math.floor(this.timeRemaining / 3600).toString().padStart(2, '0');
+        const seconds = Math.floor((this.timeRemaining % 3600) / 60).toString().padStart(2, '0');
+        document.getElementById('timer').textContent = `${minutes}:${seconds}`;
+        
+        // Continue loop
+        requestAnimationFrame(() => this.gameLoop());
     }
 
     update() {
@@ -203,17 +223,19 @@ class Game {
     }
 
     handleKeyDown(e) {
-        if (e.key === 'ArrowUp') this.player.movingUp = true;
-        if (e.key === 'ArrowDown') this.player.movingDown = true;
-        if (e.key === 'ArrowLeft') this.player.movingLeft = true;
-        if (e.key === 'ArrowRight') this.player.movingRight = true;
+        // Handle arrow keys and WASD
+        if (e.key === 'ArrowUp' || e.key === 'w') this.player.movingUp = true;
+        if (e.key === 'ArrowDown' || e.key === 's') this.player.movingDown = true;
+        if (e.key === 'ArrowLeft' || e.key === 'a') this.player.movingLeft = true;
+        if (e.key === 'ArrowRight' || e.key === 'd') this.player.movingRight = true;
     }
 
     handleKeyUp(e) {
-        if (e.key === 'ArrowUp') this.player.movingUp = false;
-        if (e.key === 'ArrowDown') this.player.movingDown = false;
-        if (e.key === 'ArrowLeft') this.player.movingLeft = false;
-        if (e.key === 'ArrowRight') this.player.movingRight = false;
+        // Handle arrow keys and WASD
+        if (e.key === 'ArrowUp' || e.key === 'w') this.player.movingUp = false;
+        if (e.key === 'ArrowDown' || e.key === 's') this.player.movingDown = false;
+        if (e.key === 'ArrowLeft' || e.key === 'a') this.player.movingLeft = false;
+        if (e.key === 'ArrowRight' || e.key === 'd') this.player.movingRight = false;
     }
 }
 
